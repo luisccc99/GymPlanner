@@ -164,17 +164,16 @@ const ScreenHeader = (props: { onClose: () => void, dayName: DayName, handlePrev
                     backgroundColor: theme.colors.surface,
                     display: 'flex',
                     flexDirection: 'row',
-                    justifyContent: 'space-between'
+                    justifyContent: 'space-between',
+                    alignItems: 'center'
                 }}>
-                {
-                    props.dayName !== 'Monday' && (
-                        <IconButton
-                            icon='arrow-left'
-                            onPress={props.handlePrev}
-                        />
-                    )
-                }
-                <Text variant='headlineMedium' style={{ textAlign: 'center', color: theme.colors.onBackground }}>
+                <IconButton
+                    style={{ opacity: props.dayName === 'Monday' ? 0 : 1 }}
+                    disabled={props.dayName === 'Monday'}
+                    icon='arrow-left'
+                    onPress={props.handlePrev}
+                />
+                <Text variant='titleLarge' style={{ textAlign: 'center', color: theme.colors.onBackground }}>
                     {props.dayName}
                 </Text>
                 <IconButton
