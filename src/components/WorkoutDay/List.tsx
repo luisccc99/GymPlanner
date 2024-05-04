@@ -77,3 +77,4 @@ const getPrefix = (curr: number, total: number) => {
 }
 
 export default WorkoutDayList;
+export { formatInstructions, formatSetsAndDescription }
