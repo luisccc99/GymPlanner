@@ -4,8 +4,9 @@ export type WorkoutPlan = {
 }
 
 export type WorkoutDay = {
-    day: number,
-    exercises: Exercise[]
+    dayIdx: number;
+    isRestDay?: boolean;
+    exercises: Exercise[];
 }
 
 export type Exercise = {
@@ -14,7 +15,7 @@ export type Exercise = {
 }
 
 export type Instruction = {
-    sets: number;
+    sets: number | null;
     reps: number | null;
     toFailure: boolean;
 }
