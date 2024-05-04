@@ -81,7 +81,7 @@ export const ExerciseForm = (props: { nameSuffix?: string, handleRemove: () => v
 
 const ExerciseInstruction = (props: { nameSuffix?: string, onRemove: () => void }) => {
     const nameSuffix = props.nameSuffix || '';
-    const { control } = useFormContext()
+    const { control, setValue } = useFormContext()
     const toFailureSelected = useWatch({ name: `${nameSuffix}toFailure`, control, defaultValue: false })
     return (
         <View style={{
@@ -126,7 +126,13 @@ const ExerciseInstruction = (props: { nameSuffix?: string, onRemove: () => void 
                     <Checkbox.Item
                         label='to failure'
                         status={value ? 'checked' : 'unchecked'}
-                        onPress={() => onChange(!value)}
+                        onPress={() => {
+                            const newValue = !value;
+                            if (newValue) {
+                                setValue(`${nameSuffix}reps`, "")
+                            }
+                            onChange(newValue)
+                        }}
                     />
                 )}
             />
