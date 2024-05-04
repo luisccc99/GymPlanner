@@ -5,6 +5,7 @@ import WorkoutDayList from "../components/WorkoutDay/List";
 import { Exercise } from "../..";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../App";
+import { DAY } from "./WorkoutPlan/NewWorkoutPlanScreen";
 
 const workoutForToday: Exercise[] = [
     {
@@ -96,6 +97,12 @@ const HomeScreen = (props: HomeScreenProps) => {
             <View style={{ padding: 15 }}>
                 <Text variant='headlineMedium'>Good afternoon, Luis!</Text>
                 <Text variant='bodyLarge'>Today's workout plan is</Text>
+                <Button
+                    icon='plus'
+                    onPress={() => props.navigation.navigate('WorkoutPlanForm', { day: DAY.MONDAY })}
+                >
+                    Create Workout Plan
+                </Button>
             </View>
             <ScrollView>
                 <WorkoutDayList exercises={workoutForToday} />
