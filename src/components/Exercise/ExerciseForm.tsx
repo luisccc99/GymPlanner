@@ -1,9 +1,19 @@
-import { Controller, useFieldArray, useFormContext } from "react-hook-form";
+import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { View } from "react-native";
 import { Button, Checkbox, IconButton, Text, TextInput } from "react-native-paper";
+import { Exercise } from "../../..";
 
 
-export const ExerciseForm = (props: { nameSuffix?: string }) => {
+export const emptyExercise: Exercise = {
+    commonName: '',
+    instructions: [{
+        sets: null,
+        reps: null,
+        toFailure: false
+    }]
+};
+
+export const ExerciseForm = (props: { nameSuffix?: string, handleRemove: () => void }) => {
     const { control } = useFormContext();
     const nameSuffix = props.nameSuffix || '';
     const instructionsSuffix = `${nameSuffix}instructions`;
@@ -15,23 +25,25 @@ export const ExerciseForm = (props: { nameSuffix?: string }) => {
 
     return (
         <>
+
             <Controller
                 control={control}
                 name={`${nameSuffix}commonName`}
                 render={({ field: { value, onChange } }) => (
                     <TextInput
                         mode='outlined'
-                        style={{ marginBottom: 15 }}
                         label='Exercise'
                         value={value}
                         onChangeText={onChange}
                     />
                 )}
             />
+
             <Text
-                variant='bodyMedium'
+                variant='bodyLarge'
+
                 style={{
-                    fontWeight: 'bold'
+                    marginTop: 10,
                 }}>
                 Workout instructions
             </Text>
@@ -44,25 +56,33 @@ export const ExerciseForm = (props: { nameSuffix?: string }) => {
                     />
                 ))
             }
-            <Button
-                style={{
-                    width: 150,
-                    alignSelf: 'stretch',
-                }}
-                onPress={() => append({ sets: "", reps: "", toFailure: false })}
-                mode='text'
-                icon='plus'
-            >
-                Add instruction
-            </Button>
+            <View style={{ display: 'flex', flexDirection: 'row', marginTop: 10 }}>
+                <Button
+                    style={{
+                        width: 150,
+                        alignSelf: 'stretch',
+                    }}
+                    onPress={() => append({ sets: "", reps: "", toFailure: false })}
+                    mode='text'
+                >
+                    Add instruction
+                </Button>
+                <Button
+                    style={{ marginRight: 'auto', }}
+                    onPress={props.handleRemove}
+                >
+                    Remove exercise
+                </Button>
+            </View>
         </>
     );
 }
 
 
 const ExerciseInstruction = (props: { nameSuffix?: string, onRemove: () => void }) => {
-    const { control } = useFormContext()
     const nameSuffix = props.nameSuffix || '';
+    const { control } = useFormContext()
+    const toFailureSelected = useWatch({ name: `${nameSuffix}toFailure`, control, defaultValue: false })
     return (
         <View style={{
             display: 'flex',
@@ -92,6 +112,7 @@ const ExerciseInstruction = (props: { nameSuffix?: string, onRemove: () => void 
                         style={{ marginLeft: 5, width: 'auto' }}
                         mode='outlined'
                         label='Reps'
+                        disabled={toFailureSelected}
                         keyboardType="numeric"
                         value={value}
                         onChangeText={onChange}
