@@ -1,14 +1,16 @@
 import { ScrollView, View } from "react-native"
-import { Button, Checkbox, IconButton, ProgressBar, Surface, Text, TextInput } from "react-native-paper"
+import { Button, Checkbox, IconButton, ProgressBar, Surface, Text } from "react-native-paper"
 import { useAppTheme } from "../../../theme"
 import { SafeAreaView } from "react-native-safe-area-context";
 import { NativeStackScreenProps } from "@react-navigation/native-stack";
 import { RootStackParamList } from "../../../App";
 import { Controller, FormProvider, useFieldArray, useForm, useFormContext, useWatch } from "react-hook-form";
-import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect } from "react";
 import { emptyExercise, ExerciseForm } from "../../components/Exercise/ExerciseForm";
 import { useWorkoutPlan } from "../../components/WorkoutPlan/store";
-import { Exercise } from "../../..";
+import { Exercise, WorkoutDay } from "../../..";
+import { yupResolver } from "@hookform/resolvers/yup";
+import { workoutDaySchema } from "../../components/Exercise/ExerciseSchema";
 
 export enum DAY {
     MONDAY = 0,
@@ -26,23 +28,22 @@ type WorkoutPlanFormProps = NativeStackScreenProps<RootStackParamList, 'WorkoutP
 
 const WorkoutPlanForm = (props: WorkoutPlanFormProps) => {
     const theme = useAppTheme();
-    const dayName = dayNames[props.route.params.day]
     const dayIdx = props.route.params.day;
+    const dayName = dayNames[dayIdx]
     const { days, reset, saveWorkoutDay } = useWorkoutPlan();
 
-    const methods = useForm<{ exercises: Exercise[], isRestDay: boolean }>({
+    const methods = useForm<WorkoutDay>({
         defaultValues: {
+            dayIdx,
             exercises: [],
             isRestDay: false
-        }
+        },
+        resolver: yupResolver(workoutDaySchema),
+        mode: 'onBlur',
     });
 
     const handleSaveWorkoutDay = () => {
-        const workoutDay = {
-            dayIdx,
-            ...methods.getValues(),
-        }
-        saveWorkoutDay(workoutDay)
+        saveWorkoutDay(methods.getValues())
     }
 
     const handlePrev = useCallback(() => {
@@ -51,7 +52,11 @@ const WorkoutPlanForm = (props: WorkoutPlanFormProps) => {
         props.navigation.replace('WorkoutPlanForm', { day: dayIdx - 1 });
     }, [dayIdx])
 
-    const handleNext = useCallback(() => {
+    const handleNext = useCallback(async () => {
+        const res = await methods.trigger()
+        if (!res) {
+            return
+        }
         handleSaveWorkoutDay()
         if (dayIdx === dayNames.length - 1) {
             props.navigation.push('FormSummary')
@@ -81,6 +86,27 @@ const WorkoutPlanForm = (props: WorkoutPlanFormProps) => {
                     progress={(dayIdx + 1) / dayNames.length}
                 />
                 <ScrollView style={{ paddingLeft: 15, paddingRight: 15 }}>
+                    {
+                        (
+                            methods.formState.errors.exercises?.type === 'min' ||
+                            methods.formState.errors.exercises?.root?.type === 'min'
+                        ) && (
+                            <Surface
+                                mode="flat"
+                                style={{
+                                    backgroundColor: theme.colors.errorContainer,
+                                    padding: 10,
+                                    borderRadius: 5
+                                }}>
+                                <Text style={{ color: theme.colors.onErrorContainer }}>
+                                    {
+                                        methods.formState.errors.exercises?.message ||
+                                        methods.formState.errors.exercises?.root?.message
+                                    }
+                                </Text>
+                            </Surface>
+                        )
+                    }
                     <RestDayCheck />
                     <WorkoutDayForm />
                 </ScrollView>
@@ -112,11 +138,12 @@ const RestDayCheck = () => {
 
 const WorkoutDayForm = () => {
     const theme = useAppTheme();
-    const { control } = useFormContext();
+    const { control, getFieldState } = useFormContext();
     const { fields, append, remove } = useFieldArray({
         control: control,
         name: 'exercises'
     });
+    
     const isRestDay = useWatch({ name: 'isRestDay', control })
 
     const removeExercise = useCallback((idx: number) => {

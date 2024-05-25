@@ -1,20 +1,22 @@
 import { Controller, useFieldArray, useFormContext, useWatch } from "react-hook-form";
 import { View } from "react-native";
-import { Button, Checkbox, IconButton, Text, TextInput } from "react-native-paper";
+import { Button, Checkbox, IconButton, Surface, Text, TextInput } from "react-native-paper";
 import { Exercise } from "../../..";
+import { useAppTheme } from "../../../theme";
 
 
 export const emptyExercise: Exercise = {
     commonName: '',
     instructions: [{
-        sets: null,
-        reps: null,
+        sets: 0,
+        reps: 0,
         toFailure: false
     }]
 };
 
 export const ExerciseForm = (props: { nameSuffix?: string, handleRemove: () => void }) => {
-    const { control } = useFormContext();
+    const theme = useAppTheme()
+    const { control, getFieldState } = useFormContext();
     const nameSuffix = props.nameSuffix || '';
     const instructionsSuffix = `${nameSuffix}instructions`;
     const { fields, append, remove } = useFieldArray({
@@ -22,26 +24,32 @@ export const ExerciseForm = (props: { nameSuffix?: string, handleRemove: () => v
         rules: { minLength: 1 },
         name: instructionsSuffix
     });
-
+    const state = getFieldState(`${nameSuffix}instructions`)
     return (
-        <>
-
+        <View>
             <Controller
                 control={control}
                 name={`${nameSuffix}commonName`}
-                render={({ field: { value, onChange } }) => (
-                    <TextInput
-                        mode='outlined'
-                        label='Exercise'
-                        value={value}
-                        onChangeText={onChange}
-                    />
+                render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
+                    <>
+                        <TextInput
+                            mode='outlined'
+                            label='Exercise'
+                            value={value}
+                            onChangeText={onChange}
+                            onBlur={onBlur}
+                            error={!!error}
+                        />
+                        <Text
+                            variant='bodySmall'
+                            style={{ color: theme.colors.error }}
+                        >{error?.message}</Text>
+                    </>
                 )}
             />
 
             <Text
                 variant='bodyLarge'
-
                 style={{
                     marginTop: 10,
                 }}>
@@ -56,6 +64,30 @@ export const ExerciseForm = (props: { nameSuffix?: string, handleRemove: () => v
                     />
                 ))
             }
+            {
+                state?.error && (
+                    <Surface
+                        mode="flat"
+                        style={{
+                            backgroundColor: theme.colors.errorContainer,
+                            padding: 10,
+                            borderRadius: 5
+                        }}>
+                        {
+                            Array.isArray(state.error) ? (
+                                <Text>There are more errors</Text>
+                            ) : (
+                                <Text style={{ color: theme.colors.onErrorContainer }}>
+                                    {state.error.message}
+                                </Text>
+
+                            )
+                        }
+
+                    </Surface>
+                )
+            }
+
             <View style={{ display: 'flex', flexDirection: 'row', marginTop: 10 }}>
                 <Button
                     style={{
@@ -74,7 +106,7 @@ export const ExerciseForm = (props: { nameSuffix?: string, handleRemove: () => v
                     Remove exercise
                 </Button>
             </View>
-        </>
+        </View>
     );
 }
 
@@ -93,30 +125,38 @@ const ExerciseInstruction = (props: { nameSuffix?: string, onRemove: () => void 
             <Controller
                 control={control}
                 name={`${nameSuffix}sets`}
-                render={({ field: { value, onChange } }) => (
-                    <TextInput
-                        mode='outlined'
-                        label='Sets'
-                        style={{ width: 'auto' }}
-                        keyboardType="numeric"
-                        value={value}
-                        onChangeText={onChange}
-                    />
+                render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
+                    <>
+                        <TextInput
+                            mode='outlined'
+                            label='Sets*'
+                            style={{ width: 70 }}
+                            keyboardType="numeric"
+                            value={value === 0 ? '' : value.toString()}
+                            onChangeText={onChange}
+                            error={!!error}
+                            onBlur={onBlur}
+                        />
+                    </>
                 )}
             />
             <Controller
                 control={control}
                 name={`${nameSuffix}reps`}
-                render={({ field: { value, onChange } }) => (
-                    <TextInput
-                        style={{ marginLeft: 5, width: 'auto' }}
-                        mode='outlined'
-                        label='Reps'
-                        disabled={toFailureSelected}
-                        keyboardType="numeric"
-                        value={value}
-                        onChangeText={onChange}
-                    />
+                render={({ field: { value, onChange, onBlur }, fieldState: { error } }) => (
+                    <>
+                        <TextInput
+                            style={{ marginLeft: 5, width: 70 }}
+                            mode='outlined'
+                            label='Reps'
+                            disabled={toFailureSelected}
+                            keyboardType="numeric"
+                            value={value === 0 ? '' : value.toString()}
+                            onChangeText={onChange}
+                            onBlur={onBlur}
+                            error={!!error}
+                        />
+                    </>
                 )}
             />
             <Controller
@@ -129,7 +169,7 @@ const ExerciseInstruction = (props: { nameSuffix?: string, onRemove: () => void 
                         onPress={() => {
                             const newValue = !value;
                             if (newValue) {
-                                setValue(`${nameSuffix}reps`, "")
+                                setValue(`${nameSuffix}reps`, 0)
                             }
                             onChange(newValue)
                         }}
